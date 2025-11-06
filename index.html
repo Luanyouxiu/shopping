@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>羽你商城 · 羽毛球装备购买</title>
+  <style>
+    :root{--primary:#0f6cb9;--accent:#f1b431;--muted:#6b7280}
+    *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang SC","Microsoft YaHei",Arial}
+    body{margin:0;background:#f7fbff;color:#111}
+    .container{max-width:1100px;margin:24px auto;padding:0 16px}
+
+    header{display:flex;align-items:center;justify-content:space-between}
+    .brand{font-weight:800;color:var(--primary);font-size:20px}
+    .search{flex:1;margin:0 18px}
+    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e6eefb}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:18px}
+    .card{background:#fff;border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(11,35,68,0.06);display:flex;flex-direction:column}
+    .thumb{height:160px;border-radius:8px;background:#eef6ff;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted)}
+    .title{margin-top:10px;font-weight:700}
+    .desc{color:var(--muted);font-size:13px;margin-top:6px;flex:1}
+    .priceRow{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+    .price{font-size:18px;color:var(--primary);font-weight:800}
+    .btn{background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:700;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--primary);border:1px solid #d5eafc}
+
+    .cart{position:fixed;right:22px;bottom:22px;background:var(--primary);color:#fff;padding:12px;border-radius:12px;box-shadow:0 12px 30px rgba(15,108,185,0.2);display:flex;gap:12px;align-items:center}
+    .cart .count{background:#fff;color:var(--primary);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800}
+
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .15s}
+    .modal.open{opacity:1;pointer-events:auto}
+    .modal-card{width:420px;background:#fff;border-radius:12px;padding:18px}
+    .row{display:flex;gap:12px;align-items:center}
+    .small{font-size:13px;color:var(--muted)}
+
+    footer{margin-top:28px;padding:18px;text-align:center;color:var(--muted)}
+
+    @media(max-width:520px){.grid{grid-template-columns:repeat(1,1fr)}.modal-card{width:94%}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">羽你商城</div>
+      <div class="search"><input id="searchInput" placeholder="搜索装备，例如：球拍、羽毛球、手胶"></div>
+      <div>
+        <button class="btn ghost" id="viewAll">全部</button>
+      </div>
+    </header>
+
+    <section>
+      <div style="margin-top:12px;color:var(--muted)">精选装备 — 立即下单，支持扫码/网页支付（演示）</div>
+      <div class="grid" id="productGrid"></div>
+    </section>
+
+    <footer>支持真实接入支付渠道（示例未接入）。如需接入微信/支付宝/Stripe，我可以帮你生成示例代码。</footer>
+  </div>
+
+  <!-- 购物车浮动 -->
+  <div class="cart" id="cartBtn" title="查看购物车">
+    <div style="font-weight:800">购物车</div>
+    <div class="count" id="cartCount">0</div>
+  </div>
+
+  <!-- 购物车模态 -->
+  <div class="modal" id="cartModal">
+    <div class="modal-card">
+      <h3>购物车</h3>
+      <div id="cartList" style="max-height:320px;overflow:auto;margin-top:8px"></div>
+      <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="small">总计</div>
+          <div style="font-weight:800;font-size:18px" id="cartTotal">¥0</div>
+        </div>
+        <div>
+          <button class="btn ghost" id="clearCart">清空</button>
+          <button class="btn" id="checkoutBtn">去结算</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 示例商品数据（可替换图片与详情）
+    const products = [
+      {id:1,name:'专业羽毛球拍 A1',price:899,stock:12,desc:'轻量碳素拍，适合连贯快攻。',img:''},
+      {id:2,name:'进攻型羽毛球拍 B6',price:1099,stock:5,desc:'高弹力杆身，爆发力更强。',img:''},
+      {id:3,name:'新手入门拍套装',price:199,stock:40,desc:'含羽毛球+手胶，性价比高。',img:''},
+      {id:4,name:'高耐用羽毛球（12只）',price:69,stock:120,desc:'训练专用，稳定不断裂。',img:''},
+      {id:5,name:'专业鞋（轻盈耐磨）',price:599,stock:8,desc:'防滑减震，适合多场地。',img:''},
+      {id:6,name:'吸汗手胶（5条装）',price:29,stock:200,desc:'强吸汗，不滑手。',img:''},
+      {id:7,name:'防护护臂',price:49,stock:60,desc:'防擦伤，减少运动损伤。',img:''},
+      {id:8,name:'羽毛球拍包',price:129,stock:35,desc:'双肩设计，多层收纳。',img:''}
+    ];
+
+    // 渲染商品
+    const grid=document.getElementById('productGrid');
+    function renderProducts(list){
+      grid.innerHTML='';
+      list.forEach(p=>{
+        const card=document.createElement('div');card.className='card';
+        card.innerHTML = `
+          <div class="thumb">${p.img?'<img src="'+p.img+'" style="max-width:100%;max-height:100%">':'🏸'}</div>
+          <div class="title">${p.name}</div>
+          <div class="desc">${p.desc}</div>
+          <div class="priceRow">
+            <div class="price">¥${p.price}</div>
+            <div>
+              <button class="btn ghost addCart" data-id="${p.id}">加入购物车</button>
+              <button class="btn buyNow" data-id="${p.id}">立即购买</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+    renderProducts(products);
+
+    // 购物车逻辑（本地模拟）
+    let cart = {}; // id -> qty
+    const cartCountEl=document.getElementById('cartCount');
+    const cartBtn=document.getElementById('cartBtn');
+    const cartModal=document.getElementById('cartModal');
+    const cartList=document.getElementById('cartList');
+    const cartTotalEl=document.getElementById('cartTotal');
+
+    function updateCartUI(){
+      const totalQty=Object.values(cart).reduce((a,b)=>a+b,0);
+      cartCountEl.textContent=totalQty;
+      renderCartList();
+    }
+
+    function renderCartList(){
+      cartList.innerHTML='';
+      let total=0;
+      if(Object.keys(cart).length===0){cartList.innerHTML='<div class="small">购物车为空，快去挑选装备吧～</div>'}
+      Object.entries(cart).forEach(([id,qty])=>{
+        const p=products.find(x=>x.id==id);
+        const row=document.createElement('div');
+        row.className='row';
+        row.style.marginTop='10px';
+        row.innerHTML=`
+          <div style="flex:1">
+            <div style="font-weight:700">${p.name}</div>
+            <div class="small">¥${p.price} × ${qty}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn ghost dec" data-id="${id}">-</button>
+            <div style="width:28px;text-align:center">${qty}</div>
+            <button class="btn ghost inc" data-id="${id}">+</button>
+            <button class="btn" style="margin-left:8px" data-id="${id}" class="remove">移除</button>
+          </div>
+        `;
+        cartList.appendChild(row);
+        total += p.price * qty;
+      });
+      cartTotalEl.textContent = '¥' + total;
+
+      // attach handlers
+      Array.from(cartList.querySelectorAll('.inc')).forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id; cart[id] = (cart[id]||0)+1; updateCartUI();}));
+      Array.from(cartList.querySelectorAll('.dec')).forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.id; if((cart[id]||0)>1){cart[id]--; } else { delete cart[id]; } updateCartUI();}));
+      Array.from(cartList.querySelectorAll('button[data-id]')).forEach(btn=>{ if(btn.textContent==='移除'){btn.addEventListener('click',()=>{delete cart[btn.dataset.id]; updateCartUI();})}});
+    }
+
+    // add to cart / buy now
+    document.addEventListener('click',e=>{
+      if(e.target.matches('.addCart')){
+        const id=e.target.dataset.id; cart[id] = (cart[id]||0)+1; updateCartUI();
+        alert('已加入购物车');
+      }
+      if(e.target.matches('.buyNow')){
+        const id=e.target.dataset.id; cart[id] = (cart[id]||0)+1; updateCartUI(); openCart();
+      }
+    });
+
+    // 打开购物车
+    function openCart(){ cartModal.classList.add('open'); }
+    function closeCart(){ cartModal.classList.remove('open'); }
+    cartBtn.addEventListener('click',openCart);
+    cartModal.addEventListener('click',e=>{ if(e.target===cartModal) closeCart(); });
+
+    // 清空
+    document.getElementById('clearCart').addEventListener('click',()=>{ if(confirm('确认清空购物车？')){cart={}; updateCartUI();}});
+
+    // 结算（模拟）
+    document.getElementById('checkoutBtn').addEventListener('click',()=>{
+      if(Object.keys(cart).length===0){ alert('购物车为空'); return; }
+      // 计算总价
+      const total = Object.entries(cart).reduce((s,[id,qty])=>{
+        const p=products.find(x=>x.id==id); return s + p.price*qty;
+      },0);
+      // 生成模拟订单号
+      const orderNo = 'ORD' + Date.now();
+      // 简单结算流程：弹窗确认并提供模拟支付链接
+      if(confirm(`确认支付 ¥${total} ? (演示)`)){
+        // 在真实场景，你会把订单发送到后端并接入支付SDK
+        alert('支付已完成（模拟）。订单号：' + orderNo);
+        cart = {}; updateCartUI(); closeCart();
+      }
+    });
+
+    // 搜索过滤
+    document.getElementById('searchInput').addEventListener('input',(e)=>{
+      const q=e.target.value.trim().toLowerCase();
+      if(!q) renderProducts(products);
+      else renderProducts(products.filter(p=>p.name.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q)));
+    });
+
+    // 全部按钮
+    document.getElementById('viewAll').addEventListener('click',()=>renderProducts(products));
+
+    // 初始UI
+    updateCartUI();
+  </script>
+</body>
+</html>

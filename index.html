@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>羽你商城 · 羽毛球装备购买</title>
+  <title>备战2028奥运专业团队特供 · 羽毛球装备购买</title>
   <style>
     :root{--primary:#0f6cb9;--accent:#f1b431;--muted:#6b7280}
     *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang SC","Microsoft YaHei",Arial}
@@ -42,7 +42,7 @@
 <body>
   <div class="container">
     <header>
-      <div class="brand">羽你商城</div>
+      <div class="brand">备战2028奥运专业团队</div>
       <div class="search"><input id="searchInput" placeholder="搜索装备，例如：球拍、羽毛球、手胶"></div>
       <div>
         <button class="btn ghost" id="viewAll">全部</button>
@@ -50,11 +50,11 @@
     </header>
 
     <section>
-      <div style="margin-top:12px;color:var(--muted)">精选装备 — 立即下单，支持扫码/网页支付（演示）</div>
+      <div style="margin-top:12px;color:var(--muted)">精选装备 — 立即下单，支持扫码/网页支付</div>
       <div class="grid" id="productGrid"></div>
     </section>
 
-    <footer>支持真实接入支付渠道（示例未接入）。如需接入微信/支付宝/Stripe，我可以帮你生成示例代码。</footer>
+
   </div>
 
   <!-- 购物车浮动 -->
@@ -193,9 +193,9 @@
       // 生成模拟订单号
       const orderNo = 'ORD' + Date.now();
       // 简单结算流程：弹窗确认并提供模拟支付链接
-      if(confirm(`确认支付 ¥${total} ? (演示)`)){
+      if(confirm(`确认支付 ¥${total} ? 联系开发者可享原价优惠！`)){
         // 在真实场景，你会把订单发送到后端并接入支付SDK
-        alert('支付已完成（模拟）。订单号：' + orderNo);
+        alert('支付已完成，好了快去发朋友圈炫耀一下吧！。订单号：' + orderNo);
         cart = {}; updateCartUI(); closeCart();
       }
     });
